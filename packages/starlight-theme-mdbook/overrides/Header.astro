@@ -1,7 +1,7 @@
 ---
 // Rebuilds Starlight's navbar to match mdBook's menu-bar layout:
 // left = sidebar toggle, theme picker, search; center = title;
-// right = print, git repository link, edit-this-page.
+// right = print, social links, edit-this-page.
 import config from 'virtual:starlight/user-config';
 import { Icon } from '@astrojs/starlight/components';
 import Search from 'virtual:starlight/components/Search';
@@ -12,7 +12,7 @@ import EditLink from './EditLink.astro';
 const shouldRenderSearch =
 	config.pagefind || config.components.Search !== '@astrojs/starlight/components/Search.astro';
 
-const gitRepo = config.social?.find((entry) => entry.icon === 'github');
+const socialLinks = config.social ?? [];
 ---
 
 <div class="mdbook-nav">
@@ -50,11 +50,11 @@ const gitRepo = config.social?.find((entry) => entry.icon === 'github');
 			</svg>
 		</button>
 		{
-			gitRepo && (
-				<a class="icon-button" href={gitRepo.href} title="Git repository" aria-label="Git repository">
-					<Icon name={gitRepo.icon} />
+			socialLinks.map((entry) => (
+				<a class="icon-button" href={entry.href} title={entry.label} aria-label={entry.label}>
+					<Icon name={entry.icon} />
 				</a>
-			)
+			))
 		}
 		<EditLink />
 	</div>
