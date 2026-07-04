@@ -1,0 +1,190 @@
+---
+// Replaces Starlight's native <select> dropdown with mdBook's icon-only
+// paintbrush button + popup menu (checkmark on the active theme), so it
+// sits flush as a plain icon-button in the navbar instead of a
+// variable-width text control.
+// Auto/Light/Dark plus mdBook's Rust and daisyUI's Valentine/Caramellatte
+// (all three light variants).
+const THEMES = [
+	{ value: 'auto', label: 'Auto' },
+	{ value: 'light', label: 'Light' },
+	{ value: 'dark', label: 'Dark' },
+	{ value: 'rust', label: 'Rust' },
+	{ value: 'valentine', label: 'Valentine' },
+	{ value: 'caramellatte', label: 'Caramellatte' },
+];
+---
+
+<div class="theme-select-wrapper">
+	<button
+		id="mdbook-theme-toggle"
+		class="icon-button"
+		type="button"
+		title="Change theme"
+		aria-label="Change theme"
+		aria-haspopup="true"
+		aria-expanded="false"
+		aria-controls="mdbook-theme-list"
+	>
+		<svg viewBox="0 0 576 512" width="1em" height="1em" fill="currentColor" aria-hidden="true">
+			<path
+				d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"
+			></path>
+		</svg>
+	</button>
+	<ul id="mdbook-theme-list" class="theme-popup" role="menu" aria-label="Themes">
+		{
+			THEMES.map((t) => (
+				<li role="none">
+					<button role="menuitem" class="theme" data-theme-value={t.value}>
+						{t.label}
+					</button>
+				</li>
+			))
+		}
+	</ul>
+</div>
+
+{/* is:inline (not hoisted/bundled) so it always executes and re-runs on
+    every View Transitions navigation, matching ThemeProvider.astro. Plain
+    JS because inline scripts aren't processed by esbuild.
+
+    IMPORTANT: Starlight renders <ThemeSelect/> more than once per page
+    (once in the mobile preferences drawer, once in our Header). That means
+    duplicate #mdbook-theme-toggle / #mdbook-theme-list IDs in the document,
+    which is invalid and makes getElementById() resolve to whichever is first
+    in DOM order (the hidden mobile one on desktop). So we never query by
+    global ID: we scope every lookup to its own .theme-select-wrapper. */}
+<script is:inline>
+	(function () {
+		function init() {
+			document.querySelectorAll('.theme-select-wrapper').forEach(function (wrapper) {
+				if (wrapper.dataset.bound) return;
+				var toggle = wrapper.querySelector(':scope > button');
+				var popup = wrapper.querySelector(':scope > ul.theme-popup');
+				if (!toggle || !popup) return;
+				wrapper.dataset.bound = '1';
+
+				function isOpen() {
+					return popup.classList.contains('open');
+				}
+				function openPopup() {
+					var current =
+						window.StarlightThemeProvider && window.StarlightThemeProvider.getStoredTheme();
+					popup.querySelectorAll('button.theme').forEach(function (btn) {
+						btn.classList.toggle(
+							'theme-selected',
+							btn.getAttribute('data-theme-value') === current
+						);
+					});
+					popup.classList.add('open');
+					toggle.setAttribute('aria-expanded', 'true');
+				}
+				function closePopup() {
+					popup.classList.remove('open');
+					toggle.setAttribute('aria-expanded', 'false');
+				}
+
+				toggle.addEventListener('click', function (e) {
+					e.stopPropagation();
+					isOpen() ? closePopup() : openPopup();
+				});
+				popup.addEventListener('click', function (e) {
+					var btn = e.target.closest('button.theme');
+					if (!btn) return;
+					if (window.StarlightThemeProvider) {
+						window.StarlightThemeProvider.setTheme(btn.getAttribute('data-theme-value'));
+					}
+					closePopup();
+				});
+			});
+		}
+
+		init();
+		document.addEventListener('astro:page-load', init);
+
+		if (!window.__mdbookThemeDocBound) {
+			window.__mdbookThemeDocBound = true;
+			document.addEventListener('click', function (e) {
+				document.querySelectorAll('.theme-select-wrapper').forEach(function (wrapper) {
+					var popup = wrapper.querySelector(':scope > ul.theme-popup');
+					if (popup && popup.classList.contains('open') && !wrapper.contains(e.target)) {
+						popup.classList.remove('open');
+						var t = wrapper.querySelector(':scope > button');
+						if (t) t.setAttribute('aria-expanded', 'false');
+					}
+				});
+			});
+			document.addEventListener('keydown', function (e) {
+				if (e.key !== 'Escape') return;
+				document.querySelectorAll('.theme-select-wrapper').forEach(function (wrapper) {
+					var popup = wrapper.querySelector(':scope > ul.theme-popup');
+					if (popup && popup.classList.contains('open')) {
+						popup.classList.remove('open');
+						var t = wrapper.querySelector(':scope > button');
+						if (t) t.focus();
+					}
+				});
+			});
+		}
+	})();
+</script>
+
+<style>
+	@layer starlight.components {
+		.theme-select-wrapper {
+			position: relative;
+			height: 100%;
+		}
+
+		.theme-popup {
+			position: absolute;
+			inset-inline-start: 0;
+			top: 100%;
+			z-index: 20;
+			min-width: 8em;
+			margin: 0.25rem 0 0;
+			padding: 0;
+			list-style: none;
+			border-radius: 4px;
+			font-size: 0.85em;
+			color: var(--sl-color-text);
+			background: var(--sl-color-bg-nav);
+			border: 1px solid var(--sl-color-hairline);
+			box-shadow: var(--sl-shadow-md);
+			overflow: hidden;
+			display: none;
+		}
+		.theme-popup.open {
+			display: block;
+		}
+
+		.theme-popup .theme {
+			display: block;
+			width: 100%;
+			border: 0;
+			margin: 0;
+			padding: 0.5em 1.2em;
+			line-height: 1.6;
+			white-space: nowrap;
+			text-align: start;
+			cursor: pointer;
+			color: inherit;
+			background: inherit;
+			font-size: inherit;
+		}
+		.theme-popup .theme:hover {
+			background-color: var(--sl-color-gray-6);
+		}
+
+		.theme-popup .theme-selected {
+			padding-inline-start: 1.8em;
+			position: relative;
+		}
+		.theme-popup .theme-selected::before {
+			content: '✓';
+			position: absolute;
+			inset-inline-start: 0.6em;
+		}
+	}
+</style>

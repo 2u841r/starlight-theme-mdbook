@@ -1,0 +1,92 @@
+{/* Intentionally inlined to avoid FOUC. Exposes Auto/Light/Dark/Rust/Valentine/Caramellatte.
+    Starlight's native binary `data-theme` is kept, and `data-mdbook-theme`
+    selects the palette in `src/styles/mdbook-theme.css` (Dark maps to mdBook's
+    `coal` palette; Rust/Valentine/Caramellatte are light variants). Also owns
+    sidebar open/closed state, independent of viewport width (mirrors mdBook). */}
+<script is:inline>
+	window.StarlightThemeProvider = (() => {
+		// Each selectable theme maps to a Starlight light/dark mode
+		// (`data-theme`) and an mdBook palette name (`data-mdbook-theme`,
+		// see src/styles/mdbook-theme.css). Rust/Valentine/Caramellatte are
+		// light variants. Dark uses mdBook's `coal` palette.
+		const THEMES = {
+			light: { mode: 'light', palette: 'light' },
+			dark: { mode: 'dark', palette: 'coal' },
+			rust: { mode: 'light', palette: 'rust' },
+			valentine: { mode: 'light', palette: 'valentine' },
+			caramellatte: { mode: 'light', palette: 'caramellatte' },
+		};
+		const THEME_KEY = 'mdbook-theme';
+		const SIDEBAR_KEY = 'mdbook-sidebar';
+
+		function getPreferredColorScheme() {
+			return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+		}
+
+		function getStoredTheme() {
+			try {
+				return localStorage.getItem(THEME_KEY) || 'auto';
+			} catch (e) {
+				return 'auto';
+			}
+		}
+
+		function applyTheme(theme) {
+			// auto or unknown value -> fall back to system preference (light/dark).
+			var def = THEMES[theme] || THEMES[getPreferredColorScheme()];
+			document.documentElement.dataset.theme = def.mode;
+			document.documentElement.dataset.mdbookTheme = def.palette;
+		}
+
+		function setTheme(theme) {
+			applyTheme(theme);
+			try {
+				localStorage.setItem(THEME_KEY, theme === 'auto' ? '' : theme);
+			} catch (e) {}
+		}
+
+		applyTheme(getStoredTheme());
+
+		window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+			if (getStoredTheme() === 'auto') applyTheme('auto');
+		});
+
+		let storedSidebar;
+		try {
+			storedSidebar = localStorage.getItem(SIDEBAR_KEY);
+		} catch (e) {
+			storedSidebar = null;
+		}
+		document.documentElement.dataset.sidebar =
+			storedSidebar || (window.innerWidth >= 1080 ? 'visible' : 'hidden');
+
+		/** Scroll the sidebar's active chapter link into view if it's currently
+		 *  scrolled out of sight, so opening the menu never requires hunting
+		 *  for where you are in a long list. */
+		function scrollActiveLinkIntoView() {
+			const scroller = document.getElementById('starlight__sidebar');
+			const active = scroller && scroller.querySelector('a[aria-current="page"]');
+			if (!scroller || !active) return;
+			const scrollerRect = scroller.getBoundingClientRect();
+			const activeRect = active.getBoundingClientRect();
+			const isVisible = activeRect.top >= scrollerRect.top && activeRect.bottom <= scrollerRect.bottom;
+			if (!isVisible) {
+				active.scrollIntoView({ block: 'center', behavior: 'instant' });
+			}
+		}
+
+		return {
+			setTheme,
+			getStoredTheme,
+			scrollActiveLinkIntoView,
+			toggleSidebar() {
+				const next = document.documentElement.dataset.sidebar === 'hidden' ? 'visible' : 'hidden';
+				document.documentElement.dataset.sidebar = next;
+				try {
+					localStorage.setItem(SIDEBAR_KEY, next);
+				} catch (e) {}
+				if (next === 'visible') scrollActiveLinkIntoView();
+			},
+		};
+	})();
+</script>

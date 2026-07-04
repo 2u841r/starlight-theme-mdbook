@@ -1,0 +1,10 @@
+{
+	"name": "starlight-theme-mdbook-monorepo",
+	"version": "0.0.1",
+	"license": "MIT",
+	"description": "Starlight theme inspired by rust-lang's mdBook.",
+	"type": "module",
+	"private": true,
+	"workspaces": ["packages/*", "docs"],
+	"keywords": ["starlight", "theme", "mdbook", "plugin", "documentation", "astro"]
+}

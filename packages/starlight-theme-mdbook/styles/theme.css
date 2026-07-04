@@ -1,0 +1,493 @@
+/*
+ * Re-skins Starlight's design tokens to match rust-lang mdBook's layout and
+ * built-in color schemes, plus two bonus palettes ported from daisyUI
+ * (Valentine, Caramellatte). mdBook color values are transcribed from
+ * mdBook's crates/mdbook-html/front-end/css/variables.css.
+ *
+ * `data-theme` stays Starlight's native binary light/dark switch (untouched,
+ * still drives expressive-code / Search / Badge).
+ * `data-mdbook-theme` drives the palette below; selectable values are
+ * light/dark/rust/valentine/caramellatte (see ThemeSelect.astro) — navy is
+ * defined here too but not currently exposed in the picker.
+ */
+
+/* Layout proportions shared by all schemes. Deliberately unlayered:
+   Starlight's own props.css re-declares `--sl-nav-height` at the ≥50em
+   breakpoint inside `starlight.base` too, and since both would otherwise sit
+   in the same layer, plain source order decides the winner (props.css loads
+   after custom CSS in Astro's bundle, so it was winning). Unlayered rules
+   always beat layered ones regardless of order.
+
+   No font-family override here — this package doesn't ship webfonts (an npm
+   package can't easily place font files into a consumer's public/ dir), so
+   Starlight's own default system-font stack is left untouched. */
+:root {
+	--sl-content-width: 750px;
+	--sl-nav-height: 50px;
+	--sl-sidebar-width: 330px;
+}
+
+/* Unlayered on purpose: Astro bundles custom CSS *before* Starlight's
+   props.css, so inside `starlight.base` Starlight's `[data-theme]` token
+   blocks beat these (by source order, and for light by specificity too) and
+   none of the mdBook palettes would apply. Unlayered rules beat all layered
+   ones regardless of order/specificity, same trick the `:root` block above
+   relies on. These only set color tokens, so layout/animation are untouched. */
+[data-mdbook-theme='light'] {
+		--sl-color-bg: hsl(0, 0%, 100%);
+		--sl-color-bg-nav: hsl(0, 0%, 100%);
+		--sl-color-bg-sidebar: #fafafa;
+		--sl-color-bg-inline-code: #e6e6e6;
+		--sl-color-text: hsl(0, 0%, 0%);
+		--sl-color-text-accent: #20609f;
+		--sl-color-text-invert: hsl(0, 0%, 100%);
+		--sl-color-white: hsl(0, 0%, 0%);
+		--sl-color-black: hsl(0, 0%, 100%);
+		--sl-color-gray-1: #1a1a1a;
+		--sl-color-gray-2: #333333;
+		--sl-color-gray-5: #cccccc;
+		--sl-color-gray-6: #f4f4f4;
+		--sl-color-hairline-light: hsl(0, 0%, 95%);
+		--sl-color-hairline: hsl(0, 0%, 80%);
+		--sl-color-hairline-shade: hsl(0, 0%, 95%);
+		--sl-color-accent: #1f1fff;
+		--sl-color-accent-high: #0d0d99;
+		--sl-color-accent-low: #e4e4ff;
+		--sl-color-bg-accent: #1f1fff;
+		--sl-color-blue: #0969da;
+		--sl-color-purple: #008000;
+		--sl-color-orange: #9a6700;
+		--sl-color-red: #b52731;
+	}
+
+	[data-mdbook-theme='rust'] {
+		--sl-color-bg: hsl(60, 9%, 87%);
+		--sl-color-bg-nav: hsl(60, 9%, 87%);
+		--sl-color-bg-sidebar: #3b2e2a;
+		--sl-color-bg-inline-code: #99908a;
+		--sl-color-text: #262625;
+		--sl-color-text-accent: #2b79a2;
+		--sl-color-text-invert: #c8c9db;
+		--sl-color-white: #262625;
+		--sl-color-black: hsl(60, 9%, 87%);
+		--sl-color-gray-1: #33302c;
+		--sl-color-gray-2: #4a453e;
+		--sl-color-gray-5: hsl(60, 5%, 70%);
+		--sl-color-gray-6: hsl(60, 9%, 84%);
+		--sl-color-hairline-light: hsl(60, 9%, 82%);
+		--sl-color-hairline: hsl(60, 9%, 78%);
+		--sl-color-hairline-shade: hsl(60, 9%, 82%);
+		--sl-color-accent: #e69f67;
+		--sl-color-accent-high: #8c391f;
+		--sl-color-accent-low: #f0dcc5;
+		--sl-color-bg-accent: #e69f67;
+		--sl-color-blue: #023b95;
+		--sl-color-purple: #007700;
+		--sl-color-orange: #603700;
+		--sl-color-red: #aa1721;
+	}
+
+	[data-mdbook-theme='coal'] {
+		--sl-color-bg: hsl(200, 7%, 8%);
+		--sl-color-bg-nav: hsl(200, 7%, 8%);
+		--sl-color-bg-sidebar: #292c2f;
+		--sl-color-bg-inline-code: #1f2124;
+		--sl-color-text: #98a3ad;
+		--sl-color-text-accent: #2b79a2;
+		--sl-color-text-invert: #141617;
+		--sl-color-white: #c5c8c6;
+		--sl-color-black: hsl(200, 7%, 8%);
+		--sl-color-gray-1: #c5c8c6;
+		--sl-color-gray-2: #98a3ad;
+		--sl-color-gray-5: #43484d;
+		--sl-color-gray-6: hsl(200, 7%, 13%);
+		--sl-color-hairline-light: hsl(200, 7%, 16%);
+		--sl-color-hairline: hsl(200, 7%, 13%);
+		--sl-color-hairline-shade: hsl(200, 7%, 5%);
+		--sl-color-accent: #3473ad;
+		--sl-color-accent-high: #8fb9dd;
+		--sl-color-accent-low: #16232e;
+		--sl-color-bg-accent: #3473ad;
+		--sl-color-blue: #4493f8;
+		--sl-color-purple: #08ae08;
+		--sl-color-orange: #d29922;
+		--sl-color-red: #d91b29;
+	}
+
+	[data-mdbook-theme='navy'] {
+		--sl-color-bg: hsl(226, 23%, 11%);
+		--sl-color-bg-nav: hsl(226, 23%, 11%);
+		--sl-color-bg-sidebar: #282d3f;
+		--sl-color-bg-inline-code: #282e40;
+		--sl-color-text: #bcbdd0;
+		--sl-color-text-accent: #2b79a2;
+		--sl-color-text-invert: #161923;
+		--sl-color-white: #c8c9db;
+		--sl-color-black: hsl(226, 23%, 11%);
+		--sl-color-gray-1: #c8c9db;
+		--sl-color-gray-2: #bcbdd0;
+		--sl-color-gray-5: #505274;
+		--sl-color-gray-6: hsl(226, 23%, 16%);
+		--sl-color-hairline-light: hsl(226, 23%, 19%);
+		--sl-color-hairline: hsl(226, 23%, 16%);
+		--sl-color-hairline-shade: hsl(226, 23%, 7%);
+		--sl-color-accent: #2b79a2;
+		--sl-color-accent-high: #8fc4e3;
+		--sl-color-accent-low: #17252e;
+		--sl-color-bg-accent: #2b79a2;
+		--sl-color-blue: #4493f8;
+		--sl-color-purple: #ab7df8;
+		--sl-color-orange: #d29922;
+		--sl-color-red: #f21424;
+	}
+
+	/* "Valentine" — ported from daisyUI's theme of the same name. Like
+	   `rust`, it pairs a light page with a dark-ish accent sidebar (daisyUI's
+	   `neutral`/`neutral-content` pair). Values are oklch() straight from the
+	   daisyUI source (`--color-*` custom properties), which every browser
+	   this theme targets (Chrome 111+/Safari 16.4+) supports natively. */
+	[data-mdbook-theme='valentine'] {
+		--sl-color-bg: oklch(97% 0.014 343.198);
+		--sl-color-bg-nav: oklch(97% 0.014 343.198);
+		--sl-color-bg-sidebar: oklch(40% 0.153 2.432);
+		--sl-color-bg-inline-code: oklch(94% 0.028 342.258);
+		--sl-color-text: oklch(52% 0.223 3.958);
+		--sl-color-text-accent: oklch(65% 0.241 354.308);
+		--sl-color-text-invert: oklch(100% 0 0);
+		--sl-color-white: oklch(52% 0.223 3.958);
+		--sl-color-black: oklch(97% 0.014 343.198);
+		--sl-color-gray-1: oklch(40% 0.153 2.432);
+		--sl-color-gray-2: oklch(52% 0.223 3.958);
+		--sl-color-gray-5: oklch(89% 0.061 343.231);
+		--sl-color-gray-6: oklch(94% 0.028 342.258);
+		--sl-color-hairline-light: oklch(94% 0.028 342.258);
+		--sl-color-hairline: oklch(89% 0.061 343.231);
+		--sl-color-hairline-shade: oklch(94% 0.028 342.258);
+		--sl-color-accent: oklch(65% 0.241 354.308);
+		--sl-color-accent-high: color-mix(in srgb, oklch(65% 0.241 354.308) 70%, black);
+		--sl-color-accent-low: color-mix(in srgb, oklch(65% 0.241 354.308) 18%, oklch(97% 0.014 343.198));
+		--sl-color-bg-accent: oklch(65% 0.241 354.308);
+		/* note/tip/warning/caution asides <- daisyUI info/secondary/warning/error */
+		--sl-color-blue: oklch(86% 0.127 207.078);
+		--sl-color-purple: oklch(62% 0.265 303.9);
+		--sl-color-orange: oklch(75% 0.183 55.934);
+		--sl-color-red: oklch(63% 0.237 25.331);
+	}
+
+	/* "Caramellatte" — ported from daisyUI. Mostly-neutral cream/brown/black
+	   palette. daisyUI's `primary` is pure black here (meant for solid
+	   black buttons), which reads as no-color-at-all for our "accent" role
+	   (links, active nav item) sitting next to already-dark body text — so
+	   this one uses daisyUI's `accent` token instead of `primary` for
+	   --sl-color-accent, unlike valentine/rust where primary IS the accent. */
+	[data-mdbook-theme='caramellatte'] {
+		--sl-color-bg: oklch(98% 0.016 73.684);
+		--sl-color-bg-nav: oklch(98% 0.016 73.684);
+		--sl-color-bg-sidebar: oklch(22.45% 0.075 37.85);
+		--sl-color-bg-inline-code: oklch(95% 0.038 75.164);
+		--sl-color-text: oklch(40% 0.123 38.172);
+		--sl-color-text-accent: oklch(46.44% 0.111 37.85);
+		--sl-color-text-invert: oklch(90% 0.076 70.697);
+		--sl-color-white: oklch(40% 0.123 38.172);
+		--sl-color-black: oklch(98% 0.016 73.684);
+		--sl-color-gray-1: oklch(55% 0.195 38.402);
+		--sl-color-gray-2: oklch(40% 0.123 38.172);
+		--sl-color-gray-5: oklch(90% 0.076 70.697);
+		--sl-color-gray-6: oklch(95% 0.038 75.164);
+		--sl-color-hairline-light: oklch(95% 0.038 75.164);
+		--sl-color-hairline: oklch(90% 0.076 70.697);
+		--sl-color-hairline-shade: oklch(95% 0.038 75.164);
+		--sl-color-accent: oklch(46.44% 0.111 37.85);
+		--sl-color-accent-high: color-mix(in srgb, oklch(46.44% 0.111 37.85) 70%, black);
+		--sl-color-accent-low: color-mix(in srgb, oklch(46.44% 0.111 37.85) 18%, oklch(98% 0.016 73.684));
+		--sl-color-bg-accent: oklch(46.44% 0.111 37.85);
+		/* note/tip/warning/caution asides <- daisyUI info/secondary/warning/error */
+		--sl-color-blue: oklch(42% 0.199 265.638);
+		--sl-color-purple: oklch(22.45% 0.075 37.85);
+		--sl-color-orange: oklch(82% 0.189 84.429);
+		--sl-color-red: oklch(70% 0.191 22.216);
+	}
+
+	/* Derive the low/high aside tints from each theme's base accent colors
+	   above instead of hard-coding a triplet per scheme. */
+	[data-mdbook-theme] {
+		--sl-color-blue-high: color-mix(in srgb, var(--sl-color-blue) 70%, white);
+		--sl-color-blue-low: color-mix(in srgb, var(--sl-color-blue) 18%, var(--sl-color-bg));
+		--sl-color-purple-high: color-mix(in srgb, var(--sl-color-purple) 70%, white);
+		--sl-color-purple-low: color-mix(in srgb, var(--sl-color-purple) 18%, var(--sl-color-bg));
+		--sl-color-orange-high: color-mix(in srgb, var(--sl-color-orange) 70%, white);
+		--sl-color-orange-low: color-mix(in srgb, var(--sl-color-orange) 18%, var(--sl-color-bg));
+		--sl-color-red-high: color-mix(in srgb, var(--sl-color-red) 70%, white);
+		--sl-color-red-low: color-mix(in srgb, var(--sl-color-red) 18%, var(--sl-color-bg));
+	}
+
+/* --- Structural tweaks toward mdBook's chrome proportions ---
+   Unlayered for the same reason as the palette block above: Astro bundles
+   customCss BEFORE Starlight's layers.css, so any `@layer starlight.*` we
+   open here is registered first and ends up with LOWEST precedence (below
+   starlight.core/base), letting Starlight's own rules win. Unlayered rules
+   beat all layered ones regardless of order. */
+.header {
+		border-bottom: 1px solid var(--sl-color-hairline);
+	}
+
+	nav.sidebar,
+	#starlight__sidebar.sidebar-pane {
+		background-color: var(--sl-color-bg-sidebar);
+	}
+
+	/* mdBook's `rust` theme pairs a LIGHT page with a DARK sidebar
+	   (#3b2e2a). Starlight drives sidebar text from the same tokens as the
+	   page, so rust's dark page-text colors leak onto the dark sidebar and
+	   become unreadable. Re-scope the sidebar's text tokens to mdBook's
+	   light `--sidebar-fg` (#c8c9db) for rust only; the page stays dark.
+	   Active links are already recolored to --sl-color-accent above. */
+	[data-mdbook-theme='rust'] #starlight__sidebar {
+		--sl-color-white: #c8c9db;
+		--sl-color-gray-2: #c8c9db;
+		--sl-color-gray-3: #a8a9bd;
+	}
+
+	/* Same fix as rust, above: valentine's sidebar uses daisyUI's dark
+	   `neutral` surface while the page stays light, so re-scope the
+	   sidebar's text tokens to `neutral-content` instead of the page's
+	   dark-on-light `--sl-color-text`. Also brighten --sl-color-accent
+	   (active-chapter/active-heading links, same scope) towards white so
+	   it pops rather than reading as a slightly-lighter version of the
+	   primary pink used elsewhere on the page. */
+	[data-mdbook-theme='valentine'] #starlight__sidebar {
+		--sl-color-white: oklch(89% 0.061 343.231);
+		--sl-color-gray-2: oklch(89% 0.061 343.231);
+		--sl-color-gray-3: color-mix(in srgb, oklch(89% 0.061 343.231) 70%, oklch(40% 0.153 2.432) 30%);
+		--sl-color-accent: color-mix(in srgb, oklch(65% 0.241 354.308) 40%, white);
+	}
+
+	/* Caramellatte's sidebar bg is daisyUI's `secondary` (set in the palette
+	   block above). Sidebar text uses `secondary-content`, its designed
+	   pairing. Active link is a brighter version of that same color (not a
+	   different hue), plus the cream highlight pill below, so it's
+	   distinguishable without clashing. */
+	[data-mdbook-theme='caramellatte'] #starlight__sidebar {
+		--sl-color-white: oklch(90% 0.076 70.697);
+		--sl-color-gray-2: oklch(90% 0.076 70.697);
+		--sl-color-gray-3: color-mix(in srgb, oklch(90% 0.076 70.697) 70%, oklch(22.45% 0.075 37.85) 30%);
+		--sl-color-accent: color-mix(in srgb, oklch(90% 0.076 70.697) 55%, white 45%);
+	}
+	[data-mdbook-theme='caramellatte'] .sidebar-content a[aria-current='page'] {
+		background-color: oklch(90% 0.076 70.697 / 35%);
+	}
+
+	.sidebar-content a[aria-current='page'] {
+		color: var(--sl-color-accent);
+		background-color: transparent;
+		font-weight: 600;
+	}
+
+	.right-sidebar-panel a[aria-current='true'] {
+		color: var(--sl-color-text-accent);
+	}
+
+	/* Expressive Code copy button, matching mdBook's top-right icon button. */
+	.expressive-code .copy button {
+		border-radius: 4px;
+	}
+
+	/* Starlight's right-hand TOC sits in a `position: fixed` box whose hit
+	   area is much larger than its visible content (it's meant to be capped
+	   by its `position: relative` parent's width, but a fixed-position
+	   descendant's `width: 100%` resolves against the viewport, not the
+	   parent). That invisible oversized box sat on top of and swallowed
+	   clicks on the fixed "next chapter" arrow button. Scope pointer events
+	   down to just the actual visible TOC content. */
+	.right-sidebar-container {
+		pointer-events: none;
+	}
+	.right-sidebar-container .sl-container {
+		pointer-events: auto;
+	}
+
+/*
+ * Sidebar can be toggled fully open/closed at ANY viewport width (mirrors
+ * mdBook), driven by `data-sidebar` on <html>, set pre-paint in
+ * ThemeProvider.astro and toggled by the hamburger button in Header.astro.
+ * PageFrame.astro's `nav.sidebar` defaults to visible; this is what actually
+ * hides it. Deliberately unlayered so it always wins regardless of layer
+ * order.
+ *
+ * Targets `nav.sidebar` (the whole fixed unit: scrollable chapter list +
+ * the resize handle, which sits *outside* the scrollable pane — see
+ * PageFrame.astro), not just `#starlight__sidebar.sidebar-pane`, so hiding
+ * the sidebar takes the resize handle with it instead of leaving it
+ * floating at the sidebar's former edge.
+ *
+ * Two different hide mechanisms depending on breakpoint, matching mdBook's
+ * own chrome.css exactly:
+ *  - Desktop (content is pushed over, not covered): instant visibility
+ *    toggle, since there's nothing to "slide" — the push itself is animated
+ *    separately via `--sl-content-inline-start`/`margin-inline-start` in
+ *    PageFrame.astro.
+ *  - Narrow viewports (sidebar overlays content): both the sidebar and the
+ *    content column slide via `transform`, so opening the menu shows the
+ *    sidebar sliding in from the left while the page slides right, leaving
+ *    a sliver of the current page peeking out on the right edge — instead
+ *    of an instant show/hide.
+ */
+@media (min-width: 50em) {
+	html[data-sidebar='hidden'] nav.sidebar {
+		visibility: hidden;
+	}
+	html:not([data-sidebar='hidden']) nav.sidebar {
+		visibility: visible;
+	}
+}
+html[data-sidebar='hidden'][data-has-sidebar] {
+	--sl-content-inline-start: 0rem;
+}
+
+@media (max-width: 50em) {
+	nav.sidebar {
+		transform: translateX(-100%);
+		/* Only hide from a11y tools/tab order once fully off-screen; show
+		   immediately (no delay) when opening. */
+		transition: transform 0.3s ease, visibility 0s linear 0.3s;
+	}
+	html[data-sidebar='hidden'] nav.sidebar {
+		visibility: hidden;
+	}
+	html:not([data-sidebar='hidden']) nav.sidebar {
+		visibility: visible;
+		transform: translateX(0);
+		transition: transform 0.3s ease;
+	}
+	.content-column {
+		transition: transform 0.3s ease;
+	}
+	html:not([data-sidebar='hidden']) .content-column {
+		transform: translateX(min(var(--sl-sidebar-width), 80vw));
+	}
+}
+html.sidebar-resizing nav.sidebar,
+html.sidebar-resizing .content-column {
+	transition: none !important;
+}
+
+/*
+ * Collapse Search's built-in "Search" label + Ctrl-K hint down to a bare
+ * icon button, matching mdBook's magnifying-glass toggle. Unlayered because
+ * Search's own sizing rules live in the `starlight.core` layer, which is
+ * declared after `starlight.components` in Starlight's layers.css and so
+ * always wins over a same-specificity rule placed in `starlight.components`.
+ */
+.search-button button[data-open-modal] {
+	width: 100%;
+	height: 100%;
+	max-width: none;
+	border: 0;
+	background: none;
+	padding: 0;
+	justify-content: center;
+}
+.search-button button[data-open-modal] > :not(svg) {
+	display: none;
+}
+
+/*
+ * Shared square icon-button used throughout the navbar (Header.astro's
+ * sidebar-toggle/print/git-repo buttons, ThemeSelect.astro's trigger,
+ * EditLink.astro's pencil link). Kept global (not scoped inside any one
+ * component's <style>) because Astro scopes component styles per-file, and
+ * this class is applied by several different components that need to look
+ * identical.
+ */
+.icon-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--sl-nav-height, 50px);
+	height: 100%;
+	border: 0;
+	padding: 0;
+	background: none;
+	color: var(--sl-color-gray-2, var(--sl-color-text));
+	font-size: 1.2rem;
+	cursor: pointer;
+	text-decoration: none;
+	transition: color 0.2s;
+}
+.icon-button:hover {
+	color: var(--sl-color-white);
+}
+
+/*
+ * "On this page" now lives inside the left sidebar, injected under the
+ * active chapter link by Sidebar.astro (PageSidebar.astro renders nothing,
+ * so Starlight's right-hand TOC column is empty) — reclaim the width it
+ * would otherwise still reserve, and style the injected heading list to
+ * match mdBook's nested, accent-bar look.
+ */
+@media (min-width: 72rem) {
+	.right-sidebar-container {
+		display: none;
+	}
+	[data-has-toc] .main-pane {
+		width: 100%;
+		/* Starlight normally hugs content against the right-hand TOC column
+		   (asymmetric `auto 0` margin) when one is present; with that column
+		   gone, center content in the reclaimed full width instead. */
+		--sl-content-margin-inline: auto;
+	}
+}
+
+.mdbook-page-toc {
+	list-style: none;
+	margin: 0.25rem 0 0.75rem;
+	padding-inline-start: 0.75rem;
+	border-inline-start: 2px solid var(--sl-color-accent);
+}
+.mdbook-page-toc ul {
+	list-style: none;
+	padding-inline-start: 0.75rem;
+	margin: 0;
+	border: 0;
+}
+.mdbook-page-toc a {
+	display: block;
+	padding: 0.2em 0.5rem;
+	border-radius: 0.25rem;
+	font-size: var(--sl-text-sm);
+	line-height: 1.6;
+	color: var(--sl-color-gray-2);
+	text-decoration: none;
+}
+.mdbook-page-toc a:hover {
+	color: var(--sl-color-white);
+}
+/* Active (in-view) section wins over :hover, so it stays the accent color
+   even while the cursor is over it. */
+.mdbook-page-toc a.is-active,
+.mdbook-page-toc a.is-active:hover {
+	color: var(--sl-color-accent);
+}
+
+/*
+ * On narrow screens the two 3-icon button clusters (each 3 × 50px icon
+ * buttons + gaps = ~158px) were squeezing the title down to almost nothing.
+ * Shrink the touch targets and tighten the gaps, matching mdBook's own
+ * `@media (max-width: 420px) { .icon-button { padding: 0 5px } }` approach.
+ */
+@media (max-width: 50em) {
+	:root {
+		--sl-nav-pad-x: 0.5rem;
+	}
+	.mdbook-nav {
+		gap: 0.25rem;
+	}
+	.left-buttons,
+	.right-buttons {
+		gap: 0;
+	}
+	.icon-button {
+		width: 2.25rem;
+		font-size: 1.05rem;
+	}
+}

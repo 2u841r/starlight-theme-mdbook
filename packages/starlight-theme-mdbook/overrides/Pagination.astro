@@ -1,0 +1,161 @@
+---
+// Replaces Starlight's card-style pagination with mdBook's floating
+// previous/next chapter arrow buttons: full-height, fixed to the viewport
+// edges on wide screens, collapsing to inline buttons at the bottom of the
+// page on narrow screens.
+import { Icon } from '@astrojs/starlight/components';
+
+const { dir, pagination } = Astro.locals.starlightRoute;
+const { prev, next } = pagination;
+const isRtl = dir === 'rtl';
+---
+
+<div class="nav-wide-wrapper print:hidden" dir={dir}>
+	{
+		prev && (
+			<a
+				href={prev.href}
+				rel="prev"
+				class="nav-chapters previous"
+				title={prev.label}
+				aria-label={prev.label}
+				aria-keyshortcuts={isRtl ? 'Right' : 'Left'}
+			>
+				<Icon name={isRtl ? 'right-arrow' : 'left-arrow'} size="2rem" />
+			</a>
+		)
+	}
+	{
+		next && (
+			<a
+				href={next.href}
+				rel="next prefetch"
+				class="nav-chapters next"
+				title={next.label}
+				aria-label={next.label}
+				aria-keyshortcuts={isRtl ? 'Left' : 'Right'}
+			>
+				<Icon name={isRtl ? 'left-arrow' : 'right-arrow'} size="2rem" />
+			</a>
+		)
+	}
+</div>
+
+<div class="nav-wrapper print:hidden" dir={dir}>
+	{
+		prev && (
+			<a href={prev.href} rel="prev" class="mobile-nav-chapters previous" title={prev.label} aria-label={prev.label}>
+				<Icon name={isRtl ? 'right-arrow' : 'left-arrow'} size="2rem" />
+			</a>
+		)
+	}
+	{
+		next && (
+			<a href={next.href} rel="next prefetch" class="mobile-nav-chapters next" title={next.label} aria-label={next.label}>
+				<Icon name={isRtl ? 'left-arrow' : 'right-arrow'} size="2rem" />
+			</a>
+		)
+	}
+	<div style="clear: both" />
+</div>
+
+<script>
+	// Left/Right arrow-key chapter navigation, mirroring mdBook's own
+	// `chapterNavigation` behaviour: ignored while typing in a form field,
+	// while the search dialog is open, or with a modifier key held.
+	function fieldHasFocus(e: KeyboardEvent): boolean {
+		const target = (e.composedPath()[0] as HTMLElement | undefined) || (e.target as HTMLElement);
+		return /^(?:input|select|textarea)$/i.test(target?.nodeName ?? '');
+	}
+
+	document.addEventListener('keydown', (e) => {
+		if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+		if (document.querySelector('dialog[open]')) return;
+		if (fieldHasFocus(e)) return;
+
+		const isRtl = document.documentElement.dir === 'rtl';
+		let selector: string | null = null;
+		if (e.key === 'ArrowRight') selector = isRtl ? '.nav-chapters.previous' : '.nav-chapters.next';
+		else if (e.key === 'ArrowLeft') selector = isRtl ? '.nav-chapters.next' : '.nav-chapters.previous';
+		if (!selector) return;
+
+		const link = document.querySelector<HTMLAnchorElement>(selector);
+		if (link) {
+			e.preventDefault();
+			window.location.href = link.href;
+		}
+	});
+</script>
+
+<style>
+	@layer starlight.components {
+		.nav-chapters {
+			position: fixed;
+			top: var(--sl-nav-height);
+			bottom: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 90px;
+			max-width: 150px;
+			text-decoration: none;
+			color: var(--sl-color-gray-3);
+			transition: color 0.2s, background-color 0.2s;
+		}
+		.nav-chapters:hover {
+			color: var(--sl-color-white);
+			background-color: var(--sl-color-gray-6);
+		}
+		.nav-chapters.previous {
+			inset-inline-start: 0;
+		}
+		.nav-chapters.next {
+			inset-inline-end: 0;
+		}
+		/* Keep clear of the real (left) sidebar once it's pushed the content
+		   over; on narrow screens the sidebar overlays instead of pushing, so
+		   the button stays flush with the edge there (falls back to 0). */
+		@media (min-width: 50em) {
+			.nav-chapters.previous {
+				inset-inline-start: var(--sl-content-inline-start, 0);
+			}
+		}
+
+		.nav-wrapper {
+			display: none;
+			margin-block-start: 2rem;
+		}
+		.mobile-nav-chapters {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 90px;
+			height: 3rem;
+			border-radius: 0.5rem;
+			background-color: var(--sl-color-gray-6);
+			color: var(--sl-color-gray-1);
+			text-decoration: none;
+		}
+		.mobile-nav-chapters.previous {
+			float: left;
+		}
+		.mobile-nav-chapters.next {
+			float: right;
+		}
+		[dir='rtl'] .mobile-nav-chapters.previous {
+			float: right;
+		}
+		[dir='rtl'] .mobile-nav-chapters.next {
+			float: left;
+		}
+
+		@media (max-width: 67.5rem) {
+			.nav-wide-wrapper {
+				display: none;
+			}
+			.nav-wrapper {
+				display: block;
+			}
+		}
+	}
+</style>

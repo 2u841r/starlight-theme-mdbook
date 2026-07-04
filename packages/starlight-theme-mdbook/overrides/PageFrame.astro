@@ -1,0 +1,193 @@
+---
+// Restructures Starlight's default layout (full-width fixed header sitting
+// ABOVE a below-header sidebar) into mdBook's actual structure: the sidebar
+// is its own full-height column starting at the true top of the viewport,
+// and the navbar lives entirely inside the content column next to it, not
+// spanning over the top of the sidebar. Sidebar visibility is driven
+// entirely by `data-sidebar` on <html> (see ThemeProvider.astro), not
+// Starlight's own aria-expanded mobile toggle.
+const { hasSidebar } = Astro.locals.starlightRoute;
+---
+
+<div class="page sl-flex">
+	{
+		hasSidebar && (
+			<nav class="sidebar print:hidden" aria-label={Astro.locals.t('sidebarNav.accessibleLabel')}>
+				<div id="starlight__sidebar" class="sidebar-pane">
+					<div class="sidebar-content sl-flex">
+						<slot name="sidebar" />
+					</div>
+				</div>
+				<div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+					<div class="sidebar-resize-indicator" />
+				</div>
+			</nav>
+		)
+	}
+	<div class="content-column">
+		<header class="header"><slot name="header" /></header>
+		<div class="main-frame"><slot /></div>
+	</div>
+</div>
+
+<style>
+	@layer starlight.core {
+		.page {
+			min-height: 100vh;
+		}
+
+		.content-column {
+			flex: 1;
+			min-width: 0;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.header {
+			position: sticky;
+			top: 0;
+			z-index: var(--sl-z-index-navbar);
+			height: var(--sl-nav-height);
+			border-bottom: 1px solid var(--sl-color-hairline-shade);
+			padding: var(--sl-nav-pad-y) var(--sl-nav-pad-x);
+			background-color: var(--sl-color-bg-nav);
+		}
+
+		/* `nav.sidebar` is the fixed, sized box (matching mdBook's own
+		   `.sidebar`); `.sidebar-pane` is just its scrollable inner content.
+		   The resize handle is a sibling of `.sidebar-pane` within this nav
+		   (see markup above and mdBook's own index.hbs), not nested inside
+		   the scrollable pane — so it doesn't scroll away with the chapter
+		   list, and so `position: absolute` on the handle resolves against
+		   this box's edges instead of the viewport. */
+		nav.sidebar {
+			position: fixed;
+			z-index: var(--sl-z-index-menu);
+			inset-block: 0;
+			inset-inline-start: 0;
+			/* Same width at every breakpoint (clamped so it can't overflow a
+			   tiny phone), matching mdBook: the sidebar is never a full-width
+			   takeover, even as a mobile overlay. */
+			width: min(var(--sl-sidebar-width), 80vw);
+		}
+
+		.sidebar-pane {
+			visibility: visible;
+			height: 100%;
+			background-color: var(--sl-color-black);
+			overflow-y: auto;
+			scrollbar-gutter: stable;
+		}
+
+		.sidebar-content {
+			height: 100%;
+			min-height: max-content;
+			padding: 1rem var(--sl-sidebar-pad-x) 0;
+			flex-direction: column;
+			gap: 1rem;
+		}
+
+		@media (min-width: 50rem) {
+			.sidebar-content::after {
+				content: '';
+				padding-bottom: 1px;
+			}
+		}
+
+		.main-frame {
+			flex: 1;
+			padding: var(--sl-main-pad, 0) 0 var(--sl-mobile-toc-height) 0;
+		}
+
+		@media (min-width: 50rem) {
+			.sidebar-pane {
+				background-color: var(--sl-color-bg-sidebar);
+			}
+			nav.sidebar {
+				border-inline-end: 1px solid var(--sl-color-hairline-shade);
+			}
+			.content-column {
+				margin-inline-start: var(--sl-content-inline-start, 0);
+				transition: margin-inline-start 0.2s ease;
+			}
+		}
+
+		/* Drag-to-resize handle, ported from mdBook's chrome.css. */
+		.sidebar-resize-handle {
+			display: none;
+			position: absolute;
+			cursor: col-resize;
+			inset-inline-end: -8px;
+			width: 8px;
+			top: 0;
+			bottom: 0;
+			align-items: center;
+			justify-content: flex-start;
+		}
+		.sidebar-resize-indicator {
+			width: 100%;
+			height: 16px;
+			color: var(--sl-color-gray-3);
+			margin-inline-start: 2px;
+			display: flex;
+			align-items: center;
+		}
+		.sidebar-resize-indicator::before,
+		.sidebar-resize-indicator::after {
+			content: '';
+			width: 2px;
+			border-left: dotted 2px currentColor;
+		}
+		.sidebar-resize-indicator::before {
+			height: 12px;
+		}
+		.sidebar-resize-indicator::after {
+			height: 16px;
+		}
+		@media (min-width: 50rem) and (pointer: fine) {
+			.sidebar-resize-handle {
+				display: flex;
+			}
+		}
+		html.sidebar-resizing,
+		html.sidebar-resizing * {
+			user-select: none;
+		}
+		html.sidebar-resizing .content-column {
+			transition: none;
+		}
+	}
+</style>
+
+<script>
+	const handle = document.getElementById('mdbook-sidebar-resize-handle');
+	const sidebar = document.getElementById('starlight__sidebar');
+
+	function resize(e: MouseEvent) {
+		const pos = e.clientX - sidebar!.getBoundingClientRect().left;
+		if (pos < 20) {
+			document.documentElement.dataset.sidebar = 'hidden';
+		} else {
+			if (document.documentElement.dataset.sidebar === 'hidden') {
+				document.documentElement.dataset.sidebar = 'visible';
+			}
+			const width = Math.min(Math.max(pos, 150), window.innerWidth - 100);
+			document.documentElement.style.setProperty('--sl-sidebar-width', width + 'px');
+		}
+	}
+
+	function stopResize() {
+		document.documentElement.classList.remove('sidebar-resizing');
+		window.removeEventListener('mousemove', resize);
+		window.removeEventListener('mouseup', stopResize);
+		try {
+			localStorage.setItem('mdbook-sidebar', document.documentElement.dataset.sidebar || 'visible');
+		} catch (err) {}
+	}
+
+	handle?.addEventListener('mousedown', () => {
+		document.documentElement.classList.add('sidebar-resizing');
+		window.addEventListener('mousemove', resize);
+		window.addEventListener('mouseup', stopResize);
+	});
+</script>

@@ -1,0 +1,49 @@
+{
+	"name": "starlight-theme-mdbook",
+	"version": "0.1.0",
+	"license": "MIT",
+	"description": "Starlight theme that looks and feels like rust-lang's mdBook — layout, chrome, and 4 built-in color schemes plus 2 bonus daisyUI-ported themes.",
+	"author": "Zubair Ibn Zamir",
+	"type": "module",
+	"exports": {
+		".": "./index.ts",
+		"./overrides/Header.astro": "./overrides/Header.astro",
+		"./overrides/ThemeProvider.astro": "./overrides/ThemeProvider.astro",
+		"./overrides/ThemeSelect.astro": "./overrides/ThemeSelect.astro",
+		"./overrides/PageFrame.astro": "./overrides/PageFrame.astro",
+		"./overrides/Sidebar.astro": "./overrides/Sidebar.astro",
+		"./overrides/PageSidebar.astro": "./overrides/PageSidebar.astro",
+		"./overrides/Pagination.astro": "./overrides/Pagination.astro",
+		"./overrides/EditLink.astro": "./overrides/EditLink.astro",
+		"./overrides/Footer.astro": "./overrides/Footer.astro",
+		"./styles/theme": "./styles/theme.css",
+		"./package.json": "./package.json"
+	},
+	"peerDependencies": {
+		"@astrojs/starlight": ">=0.41.0"
+	},
+	"engines": {
+		"node": ">=18.17.1"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"sideEffects": false,
+	"keywords": [
+		"starlight",
+		"theme",
+		"mdbook",
+		"rust",
+		"plugin",
+		"documentation",
+		"astro",
+		"withastro"
+	],
+	"homepage": "https://github.com/2u841r/mdBook-astro-starlight-theme",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/2u841r/starlight-theme-mdbook.git",
+		"directory": "packages/starlight-theme-mdbook"
+	},
+	"bugs": "https://github.com/2u841r/starlight-theme-mdbook/issues"
+}

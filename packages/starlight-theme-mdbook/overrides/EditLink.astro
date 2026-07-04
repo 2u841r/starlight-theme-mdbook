@@ -1,0 +1,16 @@
+---
+// Icon-only variant of Starlight's stock EditLink, for use as an mdBook-style
+// "suggest an edit" pencil button in the navbar (default renders inline text
+// + icon, which doesn't fit an icon-button toolbar slot).
+import { Icon } from '@astrojs/starlight/components';
+
+const { editUrl } = Astro.locals.starlightRoute;
+---
+
+{
+	editUrl && (
+		<a href={editUrl} class="icon-button print:hidden" title="Suggest an edit" aria-label="Suggest an edit">
+			<Icon name="pencil" />
+		</a>
+	)
+}

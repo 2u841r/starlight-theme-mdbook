@@ -1,0 +1,192 @@
+---
+// Same chapter/section tree as Starlight's default Sidebar, plus mdBook's
+// "on this page" heading list nested directly under the active chapter link
+// (see the screenshot mdBook shows: headings for the current chapter appear
+// indented right below it in the left nav, not in a separate right column).
+import MobileMenuFooter from 'virtual:starlight/components/MobileMenuFooter';
+import SidebarPersister from '@astrojs/starlight/components/SidebarPersister.astro';
+import SidebarSublist from '@astrojs/starlight/components/SidebarSublist.astro';
+
+const { sidebar, toc } = Astro.locals.starlightRoute;
+const tocItems = toc?.items ?? [];
+---
+
+<SidebarPersister>
+	<SidebarSublist sublist={sidebar} />
+</SidebarPersister>
+
+<div class="md:sl-hidden">
+	<MobileMenuFooter />
+</div>
+
+{
+	tocItems.length > 0 && (
+		<script type="application/json" id="mdbook-current-page-toc" set:html={JSON.stringify(tocItems)} />
+	)
+}
+
+<script>
+	interface TocItem {
+		depth: number;
+		slug: string;
+		text: string;
+		children: TocItem[];
+	}
+
+	function renderList(items: TocItem[]): HTMLUListElement {
+		const ul = document.createElement('ul');
+		ul.className = 'mdbook-page-toc';
+		for (const item of items) {
+			const li = document.createElement('li');
+			const a = document.createElement('a');
+			a.href = '#' + item.slug;
+			a.textContent = item.text;
+			li.append(a);
+			if (item.children.length > 0) li.append(renderList(item.children));
+			ul.append(li);
+		}
+		return ul;
+	}
+
+	// Build (or rebuild, on View Transitions navigation) the in-page heading
+	// list directly under the active chapter link, mirroring mdBook's layout.
+	function buildPageToc() {
+		const sidebar = document.getElementById('starlight__sidebar');
+		// Drop any list left over from the previous page.
+		sidebar?.querySelectorAll('.mdbook-page-toc').forEach((el) => el.remove());
+		activeTocLink = null;
+		const dataEl = document.getElementById('mdbook-current-page-toc');
+		const currentLink = sidebar?.querySelector('a[aria-current="page"]') || null;
+		if (!dataEl || !currentLink) return;
+		try {
+			const items: TocItem[] = JSON.parse(dataEl.textContent || '[]');
+			if (items.length > 0) currentLink.insertAdjacentElement('afterend', renderList(items));
+		} catch (e) {}
+	}
+
+	// --- Active-heading scroll-spy: highlight the section currently in view
+	// with the active color (e.g. mdBook orange), leaving the rest as plain
+	// sidebar text. ---
+	let activeTocLink: HTMLAnchorElement | null = null;
+	// Pauses the scroll-spy briefly after a page-toc link is clicked, so the
+	// post-click scroll can't override the user's choice. On tall-viewport /
+	// short-content pages the heading can't be scrolled all the way to the top
+	// (the page runs out of room), so the spy would otherwise activate
+	// whatever heading ends up at the page bottom instead of the clicked one.
+	let spyLockedUntil = 0;
+
+	function setActiveToc(link: HTMLAnchorElement | null) {
+		if (link === activeTocLink) return;
+		activeTocLink?.classList.remove('is-active');
+		if (link) link.classList.add('is-active');
+		activeTocLink = link;
+	}
+
+	function updateActiveToc() {
+		const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('.mdbook-page-toc a'));
+		if (links.length === 0) return;
+		const valid = links
+			.map((a) => {
+				const id = a.getAttribute('href')?.slice(1);
+				const heading = id ? document.getElementById(id) : null;
+				return { a, heading };
+			})
+			.filter((x): x is { a: HTMLAnchorElement; heading: HTMLElement } => !!x.heading);
+		if (valid.length === 0) return;
+		if (Date.now() < spyLockedUntil) return;
+
+		// Trigger line sits just under the sticky nav (~50px) plus a little
+		// padding. Kept small on purpose: a tall probe (e.g. 30% of viewport)
+		// makes every heading in a page of tiny sections (FAQ entries, etc.)
+		// land above it at once, so the loop would activate whichever heading
+		// is lowest instead of the one actually scrolled to.
+		const probe = 100;
+		let current: HTMLAnchorElement | null = null;
+		for (const { a, heading } of valid) {
+			if (heading.getBoundingClientRect().top <= probe) current = a;
+			else break;
+		}
+		// At the very top (nothing scrolled yet) fall back to the first
+		// section so something is always highlighted.
+		if (!current) current = valid[0].a;
+		// The last section usually can't be scrolled up to the probe line
+		// (not enough content below it), so at the page bottom force the last
+		// reachable heading active instead of leaving it unhighlighted.
+		// Guard with `maxScroll > 0` so this doesn't fire on short pages that
+		// fit in the viewport (where there's nothing to scroll and the normal
+		// loop already picks the right heading).
+		const docEl = document.documentElement;
+		const maxScroll = docEl.scrollHeight - window.innerHeight;
+		const lastHeading = valid[valid.length - 1].heading;
+		if (maxScroll > 0 && window.scrollY >= maxScroll - 2 && lastHeading.getBoundingClientRect().top > probe) {
+			current = valid[valid.length - 1].a;
+		}
+		setActiveToc(current);
+	}
+
+	let spyRaf = 0;
+	function onSpyScroll() {
+		if (spyRaf) return;
+		spyRaf = requestAnimationFrame(() => {
+			spyRaf = 0;
+			updateActiveToc();
+		});
+	}
+
+	// On narrow screens the sidebar is a full-screen overlay (mirrors
+	// mdBook), so following a link that actually navigates away should
+	// close it first — otherwise the next page loads with the overlay
+	// still covering the content the user just asked to see. Same-page
+	// anchors (e.g. the "on this page" heading links injected above) are
+	// left alone since they don't navigate away from the current sidebar.
+	function setupSidebarClick(sidebar: HTMLElement) {
+		if ((sidebar as any).__mdbookClickBound) return;
+		(sidebar as any).__mdbookClickBound = true;
+		sidebar.addEventListener('click', (e) => {
+			const link = (e.target as HTMLElement).closest('a');
+			if (!link) return;
+			const href = link.getAttribute('href') || '';
+			// Page-toc anchor: highlight it immediately and pause the scroll-spy
+			// so the post-click scroll can't switch it (on tall-viewport/short
+			// pages the heading can't reach the top, so the spy would otherwise
+			// pick whatever lands at the bottom).
+			if (link.closest('.mdbook-page-toc')) {
+				setActiveToc(link as HTMLAnchorElement);
+				spyLockedUntil = Date.now() + 600;
+			}
+			if (href.startsWith('#')) return;
+			if (!window.matchMedia('(max-width: 50em)').matches) return;
+
+			// Suppress the sidebar-collapse transition (same class the resize
+			// handle uses): the page is about to unload for a real navigation,
+			// so animating anything here just produces a jarring half-finished
+			// frame right before the browser swaps in the new document.
+			document.documentElement.classList.add('sidebar-resizing');
+			document.documentElement.dataset.sidebar = 'hidden';
+			try {
+				localStorage.setItem('mdbook-sidebar', 'hidden');
+			} catch (err) {}
+		});
+	}
+
+	// Runs on the initial load and after every View Transitions navigation
+	// (the module script itself only executes once, so without this the
+	// page-toc and spy would go stale after the first client-side nav).
+	function onPageLoad() {
+		buildPageToc();
+		updateActiveToc();
+		const sidebar = document.getElementById('starlight__sidebar');
+		if (sidebar) {
+			setupSidebarClick(sidebar);
+			// Reveal the active chapter link if it's scrolled out of sight.
+			if (document.documentElement.dataset.sidebar !== 'hidden') {
+				window.StarlightThemeProvider?.scrollActiveLinkIntoView();
+			}
+		}
+	}
+
+	onPageLoad();
+	document.addEventListener('astro:page-load', onPageLoad);
+	window.addEventListener('scroll', onSpyScroll, { passive: true });
+	window.addEventListener('resize', onSpyScroll, { passive: true });
+</script>

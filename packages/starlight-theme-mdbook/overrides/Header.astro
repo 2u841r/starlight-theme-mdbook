@@ -1,0 +1,99 @@
+---
+// Rebuilds Starlight's navbar to match mdBook's menu-bar layout:
+// left = sidebar toggle, theme picker, search; center = title;
+// right = print, git repository link, edit-this-page.
+import config from 'virtual:starlight/user-config';
+import { Icon } from '@astrojs/starlight/components';
+import Search from 'virtual:starlight/components/Search';
+import SiteTitle from 'virtual:starlight/components/SiteTitle';
+import ThemeSelect from 'virtual:starlight/components/ThemeSelect';
+import EditLink from './EditLink.astro';
+
+const shouldRenderSearch =
+	config.pagefind || config.components.Search !== '@astrojs/starlight/components/Search.astro';
+
+const gitRepo = config.social?.find((entry) => entry.icon === 'github');
+---
+
+<div class="mdbook-nav">
+	<div class="left-buttons">
+		<button
+			id="mdbook-sidebar-toggle"
+			class="icon-button"
+			type="button"
+			title="Toggle Table of Contents"
+			aria-label="Toggle Table of Contents"
+			aria-controls="starlight__sidebar"
+		>
+			<Icon name="bars" />
+		</button>
+		<ThemeSelect />
+		{shouldRenderSearch && <Search class="icon-button search-button" />}
+	</div>
+
+	<div class="title-wrapper sl-flex">
+		<SiteTitle />
+	</div>
+
+	<div class="right-buttons">
+		<button
+			class="icon-button print:hidden"
+			type="button"
+			title="Print this book"
+			aria-label="Print this book"
+			onclick="window.print()"
+		>
+			<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true">
+				<path
+					d="M6 2h12a1 1 0 0 1 1 1v5h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-1v3a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-3H4a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1Zm1 2v4h10V4H7Zm0 12v4h10v-4H7Z"
+				></path>
+			</svg>
+		</button>
+		{
+			gitRepo && (
+				<a class="icon-button" href={gitRepo.href} title="Git repository" aria-label="Git repository">
+					<Icon name={gitRepo.icon} />
+				</a>
+			)
+		}
+		<EditLink />
+	</div>
+</div>
+
+<script>
+	// Sidebar visibility is tracked on <html data-sidebar> by ThemeProvider.astro
+	// (works at any viewport width, unlike Starlight's own mobile-only toggle).
+	document.getElementById('mdbook-sidebar-toggle')?.addEventListener('click', () => {
+		window.StarlightThemeProvider?.toggleSidebar();
+	});
+</script>
+
+<style>
+	@layer starlight.components {
+		.mdbook-nav {
+			display: flex;
+			align-items: center;
+			height: 100%;
+			gap: 0.5rem;
+		}
+
+		.left-buttons,
+		.right-buttons {
+			display: flex;
+			align-items: center;
+			height: 100%;
+			gap: 0.25rem;
+			flex-shrink: 0;
+		}
+
+		.title-wrapper {
+			flex: 1;
+			min-width: 0;
+			justify-content: center;
+			text-align: center;
+			overflow: clip;
+			padding: 0.25rem;
+			margin: -0.25rem;
+		}
+	}
+</style>
