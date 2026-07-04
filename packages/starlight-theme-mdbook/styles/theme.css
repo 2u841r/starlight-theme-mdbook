@@ -339,6 +339,12 @@
 	html:not([data-sidebar='hidden']) nav.sidebar {
 		visibility: visible;
 	}
+	/* Pushes `.content-column` clear of the fixed sidebar (see PageFrame.astro).
+	   Only needed at this breakpoint: below it the sidebar overlays content
+	   via `transform` instead of pushing it. */
+	html:not([data-sidebar='hidden'])[data-has-sidebar] {
+		--sl-content-inline-start: var(--sl-sidebar-width);
+	}
 }
 html[data-sidebar='hidden'][data-has-sidebar] {
 	--sl-content-inline-start: 0rem;

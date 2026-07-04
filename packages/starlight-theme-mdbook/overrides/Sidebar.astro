@@ -15,7 +15,11 @@ const tocItems = toc?.items ?? [];
 </SidebarPersister>
 
 {
-	tocItems.length > 0 && (
+	/* > 1, not > 0: Starlight always injects a synthetic first "Overview"
+	   entry (see generateToC.ts) pointing back to the page top, even on
+	   pages with no real headings. A lone Overview link is useless clutter,
+	   so only render this list once there's at least one real heading too. */
+	tocItems.length > 1 && (
 		<script type="application/json" id="mdbook-current-page-toc" set:html={JSON.stringify(tocItems)} />
 	)
 }
