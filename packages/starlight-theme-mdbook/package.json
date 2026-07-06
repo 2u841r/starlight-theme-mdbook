@@ -39,7 +39,7 @@
 		"astro",
 		"withastro"
 	],
-	"homepage": "https://github.com/2u841r/mdBook-astro-starlight-theme",
+	"homepage": "https://github.com/2u841r/starlight-theme-mdbook",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/2u841r/starlight-theme-mdbook.git",
