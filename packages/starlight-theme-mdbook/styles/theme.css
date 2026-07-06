@@ -333,15 +333,23 @@
  *    of an instant show/hide.
  */
 @media (min-width: 50em) {
+	/* The whole panel (chapter list + resize handle, since both live inside
+	   this transformed box) slides off/on screen, same as mdBook's own
+	   sidebar — not just an instant show/hide. Timed to match
+	   `.content-column`'s 0.2s push below so the two move in lockstep. */
+	nav.sidebar {
+		transform: translateX(-100%);
+		transition: transform 0.2s ease, visibility 0s linear 0.2s;
+	}
 	html[data-sidebar='hidden'] nav.sidebar {
 		visibility: hidden;
 	}
 	html:not([data-sidebar='hidden']) nav.sidebar {
 		visibility: visible;
+		transform: translateX(0);
+		transition: transform 0.2s ease;
 	}
-	/* Pushes `.content-column` clear of the fixed sidebar (see PageFrame.astro).
-	   Only needed at this breakpoint: below it the sidebar overlays content
-	   via `transform` instead of pushing it. */
+	/* Pushes `.content-column` clear of the fixed sidebar (see PageFrame.astro). */
 	html:not([data-sidebar='hidden'])[data-has-sidebar] {
 		--sl-content-inline-start: var(--sl-sidebar-width);
 	}
