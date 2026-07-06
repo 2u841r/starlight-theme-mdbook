@@ -42,7 +42,7 @@
 	"homepage": "https://github.com/2u841r/starlight-theme-mdbook",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/2u841r/starlight-theme-mdbook.git",
+		"url": "git+https://github.com/2u841r/starlight-theme-mdbook.git",
 		"directory": "packages/starlight-theme-mdbook"
 	},
 	"bugs": "https://github.com/2u841r/starlight-theme-mdbook/issues"
