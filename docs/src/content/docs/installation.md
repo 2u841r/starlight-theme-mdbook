@@ -13,7 +13,7 @@ npm install starlight-theme-mdbook
 
 Add `starlightThemeMdbook()` to your `plugins` array in `astro.config.mjs`:
 
-```js {3,9}
+```js {4,10}
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
