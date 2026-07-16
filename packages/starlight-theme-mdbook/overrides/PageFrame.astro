@@ -34,6 +34,14 @@ const { hasSidebar } = Astro.locals.starlightRoute;
 	@layer starlight.core {
 		.page {
 			min-height: 100vh;
+			/* `.content-column`'s translateX below (narrow viewports) pushes it
+			   past the right edge of the viewport; browsers count a transformed
+			   element's post-transform box toward scrollable overflow, so
+			   without this the page becomes genuinely horizontally scrollable.
+			   Same fix mdBook itself uses (see its `#mdbook-body-container`) and
+			   for the same reason: without it, jumping to a same-page anchor (or
+			   dragging on mobile Safari) can shift the whole layout sideways. */
+			overflow-x: clip;
 		}
 
 		.content-column {

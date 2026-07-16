@@ -153,14 +153,21 @@ const tocItems = toc?.items ?? [];
 				setActiveToc(link as HTMLAnchorElement);
 				spyLockedUntil = Date.now() + 600;
 			}
-			if (href.startsWith('#')) return;
 			if (!window.matchMedia('(max-width: 50em)').matches) return;
 
-			// Suppress the sidebar-collapse transition (same class the resize
-			// handle uses): the page is about to unload for a real navigation,
-			// so animating anything here just produces a jarring half-finished
-			// frame right before the browser swaps in the new document.
-			document.documentElement.classList.add('sidebar-resizing');
+			// On narrow viewports the sidebar overlays the content, so it must
+			// close on ANY link click, hash included — otherwise jumping to a
+			// same-page heading leaves the overlay covering the very heading
+			// you just navigated to.
+			if (!href.startsWith('#')) {
+				// Real navigation: suppress the sidebar-collapse transition (same
+				// class the resize handle uses), since the page is about to
+				// unload anyway and animating anything here just produces a
+				// jarring half-finished frame right before the browser swaps in
+				// the new document. A same-page hash jump stays on this page, so
+				// it keeps the normal slide-closed animation instead.
+				document.documentElement.classList.add('sidebar-resizing');
+			}
 			document.documentElement.dataset.sidebar = 'hidden';
 			try {
 				localStorage.setItem('mdbook-sidebar', 'hidden');
